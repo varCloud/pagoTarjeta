@@ -15,7 +15,7 @@ $app->config([
 ]);
 
 $app->get('/', function () use ($app) {
-    $app->redirect('/checkouts');
+    //$app->redirect('/checkouts');
     echo "Iniciacion servicios con REST , SLIM y PHP";
 });
 
@@ -26,8 +26,96 @@ $app->get('/token', function () use ($app, $gateway) {
     */
     //$token => $gateway->clientToken()->generate();
     $clientToken = $gateway->clientToken()->generate();
-    echo json_encode($clientToken);
+    echo $clientToken;
 });
+
+$app->post('/verificarTarjeta', function () use ($app, $gateway) {
+    $token = $app->request->post('token');
+    $result = $gateway->paymentMethod()->create([
+        'customerId' => $token,
+        'paymentMethodNonce' => nonceFromTheClient,
+        'options' => [
+            'verifyCard' => true
+        ]
+    ]);
+
+    echo json_encode($result);
+
+});
+
+$app->post('/crearMetodoPago', function () use ($app, $gateway) {
+     $token = $app->request->post('token');
+      $result = $gateway->paymentMethod()->create([
+    'customerId' => $token,
+    'paymentMethodNonce' => 'MetodoPago',
+    'options' => [
+      'makeDefault' => true
+    ]
+]);
+
+    echo json_encode($result);
+
+});
+
+
+$app->post('/addCard', function () use ($app, $gateway) {
+    $customerId = $app->request->post('token');
+    $result = $gateway->creditCard()->create([
+        'customerId' => $customerId,
+        'number' => '378282246310005',
+        'expirationDate' => '06/22',
+        'cvv' => '3012'  ,
+        'options' => [
+          'makeDefault' => true,
+           'verificationAmount' => 1,
+           'verifyCard' => true
+        ]
+    ]);
+
+    echo json_encode($result);
+
+});
+
+$app->post('/deleteCard', function () use ($app, $gateway) {
+    $tokenTarjeta = $app->request->post('tokenTarjeta');
+    $gateway->creditCard()->delete($tokenTarjeta);
+     echo json_encode('ok');
+
+});
+
+
+$app->post('/addCiente', function () use ($app, $gateway) {
+    $customerId = $app->request->post('token');
+    $result = $gateway->customer()->create([
+        'firstName' => 'Mike',
+        'lastName' => 'Jones',
+        'company' => 'Jones Co.',
+        'email' => 'mike.jones@example.com',
+        'phone' => '281.330.8004',
+        'fax' => '419.555.1235',
+        'website' => 'http://example.com'
+    ]);
+
+
+    echo json_encode($result);
+
+});
+
+$app->post('/getCliente', function () use ($app, $gateway) {
+    $customerId = $app->request->post('token');
+    $customer = $gateway->customer()->find($customerId);
+    echo json_encode($customer);
+
+});
+
+
+$app->post('/getMetodoPago', function () use ($app, $gateway) {
+    $token = $app->request->post('token');
+    $paymentMethod = $gateway->paymentMethod()->find($token);
+     echo json_encode($paymentMethod);
+
+});
+
 
 
 $app->post('/Pagar', function () use ($app, $gateway) {
