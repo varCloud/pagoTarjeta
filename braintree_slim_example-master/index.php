@@ -29,6 +29,17 @@ $app->get('/token', function () use ($app, $gateway) {
     echo $clientToken;
 });
 
+$app->post('/tokenPorCliente', function () use ($app, $gateway) {
+    $aCustomerId = $app->request->post('CustomerId');
+    $clientToken = $gateway->clientToken()->generate([
+        "customerId" => $aCustomerId
+    ]);
+    echo $clientToken;
+});
+
+
+
+
 $app->post('/verificarTarjeta', function () use ($app, $gateway) {
     $token = $app->request->post('token');
     $result = $gateway->paymentMethod()->create([
@@ -44,14 +55,17 @@ $app->post('/verificarTarjeta', function () use ($app, $gateway) {
 });
 
 $app->post('/crearMetodoPago', function () use ($app, $gateway) {
-     $token = $app->request->post('token');
-      $result = $gateway->paymentMethod()->create([
-    'customerId' => $token,
-    'paymentMethodNonce' => 'MetodoPago',
-    'options' => [
-      'makeDefault' => true
-    ]
-]);
+    
+    $aCustomerId = $app->request->post('CustomerId');
+    $nonceFromTheClient = $app->request->post('nonceFromTheClient');
+    $result = $gateway->paymentMethod()->create([
+      'customerId' => $aCustomerId,
+      'paymentMethodNonce' => $nonceFromTheClient,
+      'options' => [
+        'verifyCard' => true,
+        'verificationAmount' => '2.00',
+      ]
+    ]);
 
     echo json_encode($result);
 
@@ -84,10 +98,10 @@ $app->post('/deleteCard', function () use ($app, $gateway) {
 });
 
 
-$app->post('/addCiente', function () use ($app, $gateway) {
+$app->post('/addCliente', function () use ($app, $gateway) {
     $customerId = $app->request->post('token');
     $result = $gateway->customer()->create([
-        'firstName' => 'Mike',
+        'firstName' => 'Victor Adrian Reyes',
         'lastName' => 'Jones',
         'company' => 'Jones Co.',
         'email' => 'mike.jones@example.com',

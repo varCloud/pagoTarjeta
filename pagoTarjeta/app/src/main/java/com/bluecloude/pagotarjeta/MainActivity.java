@@ -22,6 +22,7 @@ import com.braintreepayments.api.UnionPay;
 import com.braintreepayments.api.dropin.DropInActivity;
 import com.braintreepayments.api.dropin.DropInRequest;
 import com.braintreepayments.api.dropin.DropInResult;
+import com.braintreepayments.api.exceptions.InvalidArgumentException;
 import com.braintreepayments.api.interfaces.BraintreeCancelListener;
 import com.braintreepayments.api.interfaces.BraintreeErrorListener;
 import com.braintreepayments.api.interfaces.BraintreePaymentResultListener;
@@ -36,20 +37,23 @@ import com.braintreepayments.cardform.utils.CardType;
 import com.braintreepayments.cardform.view.CardEditText;
 import com.braintreepayments.cardform.view.CardForm;
 import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity implements PaymentMethodNonceCreatedListener  {
 
     private static final int DROP_IN_REQUEST = 1;
-    private static final String EXTRA_AUTHORIZATION = "com.braintreepayments.demo.EXTRA_AUTHORIZATION";
-    private static final String EXTRA_CUSTOMER_ID = "com.braintreepayments.demo.EXTRA_CUSTOMER_ID";
-    private String token ="";
+    private static final String EXTRA_AUTHORIZATION = "com.bluecloude.pagotarjeta.EXTRA_AUTHORIZATION";
+    private static final String EXTRA_CUSTOMER_ID = "com.bluecloude.pagotarjeta.EXTRA_CUSTOMER_ID";
+    private String CustomerId ="288868914";
+    private String  clientToken="";
     private Context context;
     private CardType mCardType;
     private CardForm mCardForm;
@@ -57,7 +61,6 @@ public class MainActivity extends AppCompatActivity  {
     private ProgressDialog mLoading;
 
 
-    protected String mAuthorization;
     @BindView(R.id.txtNotarjeta)
     TextView txtNotarjeta;
     @BindView(R.id.txtFechaVen) TextView txtFechaVen;
@@ -72,16 +75,25 @@ public class MainActivity extends AppCompatActivity  {
 
             Button btn = (Button) findViewById(R.id.btnDropop);
             Button btnAgregarTarjeta = (Button) findViewById(R.id.btnAgregarTarjeta);
-            mBraintreeFragment = BraintreeFragment.newInstance(this, mAuthorization);
+
             this.context = this;
+
+
+
+            ObtenerTokenCliente();
             btnAgregarTarjeta.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    CardBuilder cardBuilder = new CardBuilder()
-                            .cardNumber(txtNotarjeta.getText().toString())
-                            .expirationMonth("06")
-                            .expirationYear("22");
-                    Card.tokenize(mBraintreeFragment,cardBuilder);
+                    try {
+                        CardBuilder cardBuilder = new CardBuilder()
+                                .cardNumber(txtNotarjeta.getText().toString())
+                                .expirationMonth("06")
+                                .expirationYear("22");
+                        Card.tokenize(mBraintreeFragment, cardBuilder);
+                    }catch (Exception ex)
+                    {
+                        Log.e("error" , ex.getMessage());
+                    }
                 }
 
 
@@ -90,10 +102,11 @@ public class MainActivity extends AppCompatActivity  {
             btn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
+                    RequestParams params = new RequestParams();
+                    params.put("CustomerId", CustomerId);
                     AsyncHttpClient client = new AsyncHttpClient();
                     //client.get("http://10.0.2.2/pagoTarjeta/braintree_slim_example-master/token", new TextHttpResponseHandler() {
-                    client.get("http://192.168.5.178/pagoTarjeta/braintree_slim_example-master/token", new TextHttpResponseHandler() {
+                    client.post("http://192.168.5.178/pagoTarjeta/braintree_slim_example-master/tokenPorCliente",params, new TextHttpResponseHandler() {
                         @Override
                         public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
 
@@ -101,8 +114,12 @@ public class MainActivity extends AppCompatActivity  {
 
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String clientToken) {
-                            token = clientToken;
-
+                            clientToken = clientToken;
+                            try {
+                                mBraintreeFragment = BraintreeFragment.newInstance(MainActivity.this, clientToken);
+                            } catch (InvalidArgumentException e) {
+                                e.printStackTrace();
+                            }
 
                             //startActivityForResult(getDropInRequest().getIntent(context), DROP_IN_REQUEST);
                             //Braintree braintree = Braintree.getInstance(this, clientToken);
@@ -117,10 +134,42 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+    public void ObtenerTokenCliente()
+    {
+        try{
+            RequestParams params = new RequestParams();
+            params.put("CustomerId", CustomerId);
+            AsyncHttpClient client = new AsyncHttpClient();
+            //client.get("http://10.0.2.2/pagoTarjeta/braintree_slim_example-master/token", new TextHttpResponseHandler() {
+            client.post("http://192.168.5.178/pagoTarjeta/braintree_slim_example-master/tokenPorCliente",params, new TextHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String clientToken) {
+                    clientToken = clientToken;
+                    try {
+                        mBraintreeFragment = BraintreeFragment.newInstance(MainActivity.this, clientToken);
+                    } catch (InvalidArgumentException e) {
+                        e.printStackTrace();
+                    }
+
+                    //startActivityForResult(getDropInRequest().getIntent(context), DROP_IN_REQUEST);
+                    //Braintree braintree = Braintree.getInstance(this, clientToken);
+                }
+            });
+        }catch (Exception ex)
+        {
+            Log.e("error", ex.getMessage());
+        }
+    }
+
     private DropInRequest getDropInRequest() {
         DropInRequest dropInRequest = new DropInRequest()
                 .amount("1.00")
-                .clientToken(token)
+                .clientToken(clientToken)
                 .collectDeviceData(false)
                 .requestThreeDSecureVerification(false)
                 //.androidPayCart()true)
@@ -151,6 +200,37 @@ public class MainActivity extends AppCompatActivity  {
                 Exception error = (Exception) data.getSerializableExtra(DropInActivity.EXTRA_ERROR);
             }
         }
+    }
+
+    @Override
+    public void onPaymentMethodNonceCreated(PaymentMethodNonce paymentMethodNonce) {
+        // Send this nonce to your server
+        String nonce = paymentMethodNonce.getNonce();
+        try{
+            RequestParams params = new RequestParams();
+            params.put("CustomerId", CustomerId);
+            params.put("nonceFromTheClient", nonce);
+            AsyncHttpClient client = new AsyncHttpClient();
+            //client.get("http://10.0.2.2/pagoTarjeta/braintree_slim_example-master/token", new TextHttpResponseHandler() {
+            client.post("http://192.168.5.178/pagoTarjeta/braintree_slim_example-master/crearMetodoPago",params, new TextHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                    Log.e("error", responseString);
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                    Log.e("onSuccess", responseString);
+
+                    //startActivityForResult(getDropInRequest().getIntent(context), DROP_IN_REQUEST);
+                    //Braintree braintree = Braintree.getInstance(this, clientToken);
+                }
+            });
+        }catch (Exception ex)
+        {
+            Log.e("error", ex.getMessage());
+        }
+
     }
 
 
