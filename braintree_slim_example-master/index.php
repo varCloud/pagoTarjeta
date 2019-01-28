@@ -9,7 +9,7 @@ $gateway = new Braintree_Gateway([
     'privateKey' => getenv('BT_PRIVATE_KEY')
 ]);
 $app = new \Slim\Slim();
-
+//878739583
 $app->config([
     'templates.path' => 'templates',
 ]);
@@ -20,31 +20,28 @@ $app->get('/', function () use ($app) {
 });
 
 $app->get('/token', function () use ($app, $gateway) {
-    /*$app->render('checkouts/new.php', [
-        'client_token' => $gateway->clientToken()->generate(),
-    ]);
-    */
-    //$token => $gateway->clientToken()->generate();
     $clientToken = $gateway->clientToken()->generate();
     echo $clientToken;
 });
 
-$app->post('/tokenPorCliente', function () use ($app, $gateway) {
-    $aCustomerId = $app->request->post('CustomerId');
+$app->post('/TokenPorCliente', function () use ($app, $gateway) {
+    $IdClienteBrain = $app->request->post('IdClienteBrain');
     $clientToken = $gateway->clientToken()->generate([
-        "customerId" => $aCustomerId
+        "customerId" => $IdClienteBrain
     ]);
-    echo $clientToken;
+
+    $data["TokenBrain"] = $clientToken;
+    echo  json_encode($data);
+
 });
 
 
-
-
-$app->post('/verificarTarjeta', function () use ($app, $gateway) {
-    $token = $app->request->post('token');
+$app->post('/VerificarTarjeta', function () use ($app, $gateway) {
+    $TokenBrain = $app->request->post('TokenBrain');
+    $nonceFromTheClient = $app->request->post('nonceFromTheClient');
     $result = $gateway->paymentMethod()->create([
-        'customerId' => $token,
-        'paymentMethodNonce' => nonceFromTheClient,
+        'customerId' => $TokenBrain,
+        'paymentMethodNonce' => $nonceFromTheClient,
         'options' => [
             'verifyCard' => true
         ]
@@ -54,22 +51,58 @@ $app->post('/verificarTarjeta', function () use ($app, $gateway) {
 
 });
 
-$app->post('/crearMetodoPago', function () use ($app, $gateway) {
+
+$app->post('/CrearMetodoPago', function () use ($app, $gateway) {
     
-    $aCustomerId = $app->request->post('CustomerId');
-    $nonceFromTheClient = $app->request->post('nonceFromTheClient');
+    $IdClienteBrain = $app->request->post('IdClienteBrain');
+    $NonceFromTheClient = $app->request->post('NonceFromTheClient');
     $result = $gateway->paymentMethod()->create([
-      'customerId' => $aCustomerId,
-      'paymentMethodNonce' => $nonceFromTheClient,
+      'customerId' => $IdClienteBrain,
+      'paymentMethodNonce' => $NonceFromTheClient,
       'options' => [
         'verifyCard' => true,
-        'verificationAmount' => '2.00',
+        'verificationAmount' => '1.00',
       ]
     ]);
 
     echo json_encode($result);
 
 });
+
+$app->post('/EliminarMetodoPago', function () use ($app, $gateway) {
+
+    $paymentMethodToken = $app->request->post('paymentMethodToken');
+    try{
+        $result = $gateway->paymentMethod()->delete($paymentMethodToken);
+
+        $data["estatus"]  = $result->success;
+       
+    }
+    catch (Braintree_Exception_NotFound $e) {
+
+        $data["estatus"]  = false;
+        $data["mensaje"] = $e->getMessage();
+    }
+   echo json_encode($data);
+});
+
+
+$app->post('/CrearTransaccion', function () use ($app, $gateway) {
+    
+    $paymentMethodToken = $app->request->post('paymentMethodToken');
+    $amount = $app->request->post('amount');
+    $result = $gateway->transaction()->sale(
+    [
+        'paymentMethodToken' => $paymentMethodToken,
+        'amount' => $amount
+    ]
+    );
+
+    echo json_encode($result);
+
+});
+
+
 
 
 $app->post('/addCard', function () use ($app, $gateway) {
@@ -98,27 +131,32 @@ $app->post('/deleteCard', function () use ($app, $gateway) {
 });
 
 
-$app->post('/addCliente', function () use ($app, $gateway) {
-    $customerId = $app->request->post('token');
+$app->post('/CrearCliente', function () use ($app, $gateway) {
+
+    $data["Nombre"] = $app->request->post('IdClienteBrain');
+    $data["Apellido"] = $app->request->post('Apellido');
+    $data["Mail"] = $app->request->post('Mail');
+    $data["Telefono"] = $app->request->post('Telefono');
+
     $result = $gateway->customer()->create([
-        'firstName' => 'Victor Adrian Reyes',
-        'lastName' => 'Jones',
-        'company' => 'Jones Co.',
-        'email' => 'mike.jones@example.com',
-        'phone' => '281.330.8004',
-        'fax' => '419.555.1235',
-        'website' => 'http://example.com'
+        'firstName' => $data["Nombre"],
+        'lastName' => $data["Apellido"],
+        'company' => '',
+        'email' => $data["Mail"],
+        'phone' => $data["Telefono"],
+        'fax' => '',
+        'website' => ''
     ]);
-
-
-    echo json_encode($result);
+    $dataResult["IdClienteBrain"] = $result->customer->id;
+    echo json_encode($dataResult);
 
 });
 
-$app->post('/getCliente', function () use ($app, $gateway) {
-    $customerId = $app->request->post('token');
+$app->post('/ObtenerCliente', function () use ($app, $gateway) {
+    $customerId = $app->request->post('IdClienteBrain');
     $customer = $gateway->customer()->find($customerId);
-    echo json_encode($customer);
+    $dataResult["paymentMethods"] = $customer->paymentMethods;
+    echo json_encode($dataResult);
 
 });
 
@@ -201,3 +239,5 @@ $app->get('/checkouts/:transaction_id', function ($transaction_id) use ($app, $g
 });
 
 $app->run();
+
+?>

@@ -4,67 +4,69 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
+    tools:context=".MainActivity"
+    android:id="@+id/layout_main"
+>
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent" android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        >
-    <EditText
-        android:id="@+id/txtNotarjeta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="number"
-        android:hint="Numero de Tarjeta"
-        android:text="378282246310005"
-        />
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp"
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/txtFechaVen"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="number"
-        android:hint="Fecha Vencimiento"
-        />
-
-    <EditText
-        android:id="@+id/txtCVV"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="number"
-        android:hint="CVV"
-        />
-
-    <EditText
-        android:id="@+id/txtCP"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="number"
-        android:hint="Codigo Postal"
-        />
-
-    <Button
-        android:id="@+id/btnDropop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Agregar Tarjeta PAYPAL"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="16dp" />
-
-        <Button
-            android:id="@+id/btnAgregarTarjeta"
-            android:layout_width="wrap_content"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view_metodos_pagos"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Agregar Tarjeta Prueba"
-            tools:layout_editor_absoluteX="16dp"
-            tools:layout_editor_absoluteY="16dp" />
+            android:layout_marginBottom="20dp"
+            android:layoutAnimation="@anim/adapter_layout_fall_down"/>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnDropop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Agregar Tarjeta PAYPAL"
+                tools:layout_editor_absoluteX="16dp"
+                tools:layout_editor_absoluteY="16dp" />
+
+            <Button
+                android:id="@+id/btnAgregarTarjeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Agregar Tarjeta Prueba"
+                tools:layout_editor_absoluteX="16dp"
+                tools:layout_editor_absoluteY="16dp" />
+
+            <Button
+                android:id="@+id/btnCrearMetodoPago"
+                android:layout_width="210dp"
+                android:layout_height="wrap_content"
+                android:text="Agregar metodo de pago" />
+
+            <Button
+                android:id="@+id/btnCrearCliente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Agregar Cliente Brain" />
+
+            <Button
+                android:id="@+id/btnCrearTransaccion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Crear Transaccion" />
+
+        </LinearLayout>
     </LinearLayout>
-
-
+    </ScrollView>
 </RelativeLayout>

@@ -2,6 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.bluecloude.pagotarjeta">
 
+    <!-- Permission to vibrate - recommended, allows vibration feedback on scan -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Permission to use camera - required -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Camera features - recommended -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,6 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".AgregarTarjetaActivity" />
+
+        <!-- <activity android:name="io.card.payment.CardIOActivity" android:configChanges="keyboardHidden|orientation" /> -->
+        <!-- <activity android:name="io.card.payment.DataEntryActivity" /> -->
+
+        <activity android:name=".TransaccionActivity"></activity>
     </application>
 
 </manifest>
